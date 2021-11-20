@@ -3,7 +3,8 @@ const configuration = {
 };
 
 const configurationLayout = {
-    radius: process.env.LAYOUT_RADIUS || 600
+    //radius: process.env.LAYOUT_RADIUS || 600
+    radius: 600
 }
 
 export { configuration, configurationLayout };
