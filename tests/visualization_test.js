@@ -1,4 +1,5 @@
 import test from "ava";
+import moment from "moment";
 
 import { configuration, configurationLayout } from "../src/configuration.js";
 import { ActivityClock } from "../src/index.js";
@@ -24,10 +25,24 @@ test("get_data", t => {
 
 });
 
+// TEST CONSTRUCTANGLE //
+test("constructAngle", t => {
+
+    let result = ac.constructAngle(Math.floor(Math.random() * 12));
+
+    t.true(typeof(result) == "object");
+
+});
+
 // TEST CONSTRUCTARCS //
 test("constructArcs", t => {
 
-    let result = ac.constructArcs(testRadius / 2, testRadius);
+    let result = ac.constructArcs("am");
+
+    t.true(typeof(result) == "object");
+    t.true(result.length == 12);
+
+    result = ac.constructArcs("pm");
 
     t.true(typeof(result) == "object");
     t.true(result.length == 12);
@@ -53,24 +68,15 @@ test("render", t => {
 
 /******************** DECLARED PARAMS ********************/
 
-let testData = [
-    {
-        "timestamp": "2021-07-31T16:05:55-04:0",
-        "value": 1
-    },
-    {
-        "timestamp": "2021-07-31T18:05:55-04:0",
-        "value": 3
-    },
-    {
-        "timestamp": "2021-07-31T16:10:55-04:0",
-        "value": 2
-    }
-];
+let testData = [...Array(Math.floor(Math.random() * (100 - 1) + 1)).keys()].map(d => ({
+    timestamp: moment().add(Math.floor(Math.random() * (24 - 1) + 1), "hours").format(),
+    value: Math.floor(Math.random() * (100 - 1) + 1)
+}));
+
 testRadius = 124;
 
 // initialize
-let ack = new ActivityClock();
+let ack = new ActivityClock(testData, testRadius);
 
 // TEST INIT //
 test("init_params", t => {
@@ -86,10 +92,24 @@ test("get_data_params", t => {
 
 });
 
+// TEST CONSTRUCTANGLE //
+test("constructAngle_params", t => {
+
+    let result = ack.constructAngle(Math.floor(Math.random() * 12));
+
+    t.true(typeof(result) == "object");
+
+});
+
 // TEST CONSTRUCTARCS //
 test("constructArcs_params", t => {
 
-    let result = ack.constructArcs(testRadius / 2, testRadius);
+    let result = ack.constructArcs("am");
+
+    t.true(typeof(result) == "object");
+    t.true(result.length == 12);
+
+    result = ack.constructArcs("pm");
 
     t.true(typeof(result) == "object");
     t.true(result.length == 12);
