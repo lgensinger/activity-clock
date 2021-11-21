@@ -1,10 +1,11 @@
+import { name } from "../package.json";
+
 const configuration = {
-    name: "lgv-activity-calendar"
+    name: name.replace("/", "-").slice(1)
 };
 
 const configurationLayout = {
-    //radius: process.env.LAYOUT_RADIUS || 600
-    radius: 600
+    radius: process.env.LAYOUT_RADIUS || 600
 }
 
 export { configuration, configurationLayout };

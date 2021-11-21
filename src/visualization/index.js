@@ -3,7 +3,7 @@ import { select } from "d3-selection";
 import { arc } from "d3-shape";
 import moment from "moment";
 
-import { configurationLayout } from "../configuration.js";
+import { configuration, configurationLayout } from "../configuration.js";
 import { degreesToRadians } from "../utilities.js";
 
 /**
@@ -22,11 +22,11 @@ class ActivityClock {
         this.container = null;
         this.dataSource = data;
         this.degreeSlice = 360 / 12;
-        // rotate 15 degrees so arcs align to analog clock dial visually
-        this.degreeRotation = 15;
-        this.innerRadius = null
+        this.degreeRotation = 15; // rotate 15 degrees so arcs align to analog clock dial visually
         this.label = null;
-        this.outerRadius = null;
+        this.name = configuration.name;
+        this.radiusInner = null;
+        this.radiusOuter = null;
         this.ringLabels = ["pm", "am"];
 
         // using font size as the base unit of measure make responsiveness easier to manage across devices
@@ -41,33 +41,10 @@ class ActivityClock {
         this.ringWidth = (this.radius - (this.radius * 0.55)) / this.ringLabels.length;
         this.height = (this.radius * 2) + this.padding;
         this.width = this.radius * 2;
-
-        // calculate totals for all hours in source
-        let aggregateHours = rollup(data ? data : [],
-            v => sum(v, d => d.value),
-            d => moment(d.timestamp).format("H")
-        );
-
-        // organize as simple key/value object
-        this.dataReference = {};
-
-        // loop through hours
-        for (const hour of Array.from(aggregateHours)) { this.dataReference[hour[0]] = hour[1]; }
-
-        // condition data
-        // which will generate clock structure
-        // pull actual data from provided source
-        // bind to time arc in the clock
-        this.dataFormatted = this.data;
-
-        // generate hour annotation angles
         this.hourLabels = [...Array(12).keys()].map(i => {
 
-            // declare properties
-            let a = this.constructAngle(i, true);
-
-            // get centroid
-            let centroid = arc().centroid(a);
+            // generate arc and centroid
+            let centroid = arc().centroid(this.constructAngle(i, true));
 
             // generate arc centroid
             return {
@@ -78,27 +55,42 @@ class ActivityClock {
 
         });
 
+        // condition data
+        // which will generate clock structure
+        // pull actual data from provided source
+        // bind to time arc in the clock
+        this.dataFormatted = this.data;
+
     }
 
     /**
      * Condition data for visualization requirements.
-     * @returns An array of objects where each represents a ring label which should correspond to 12 hour clock hour sets.
+     * @returns An array of objects where each represents an hour in a 24 hour day.
      */
     get data() {
 
-        // generate rings
-        let rings = this.ringLabels.map((d, i) => {
+        // calculate totals for all hours in source
+        let aggregateHours = rollup(this.dataSource ? this.dataSource : [],
+            v => sum(v, d => d.value),
+            d => moment(d.timestamp).format("H")
+        );
+
+        // organize as simple key/value object
+        // hour: value
+        this.dataReference = {};
+        for (const hour of Array.from(aggregateHours)) { this.dataReference[hour[0]] = hour[1]; }
+
+        // generate rings for AM/PM sets and flatten into 1D array of arc objects
+        return this.ringLabels.map((d, i) => {
 
             // set radius
-            this.outerRadius = i == 0 ? this.radius : this.radius - (this.ringWidth * i);
-            this.innerRadius = this.outerRadius - this.ringWidth;
+            this.radiusOuter = i == 0 ? this.radius : this.radius - (this.ringWidth * i);
+            this.radiusInner = this.radiusOuter - this.ringWidth;
 
             // generate arcs and map data to each
             return this.constructArcs(d);
 
-        });
-
-        return rings.flat();
+        }).flat();
 
     }
 
@@ -192,17 +184,12 @@ class ActivityClock {
      * @returns An object with key/values representing a d3.js arc.
      */
     constructAngle(i, isAnnotation=false) {
-
-        let outerRadius = isAnnotation ? (this.radius - this.ringWidth) : this.outerRadius;
-        let innerRadius = isAnnotation ? (this.radius - this.ringWidth) : this.innerRadius;
-
         return {
             startAngle: degreesToRadians((i * this.degreeSlice) + this.degreeRotation),
             endAngle: degreesToRadians((i * this.degreeSlice) + this.degreeSlice + this.degreeRotation),
-            innerRadius: innerRadius,
-            outerRadius: outerRadius
+            innerRadius: isAnnotation ? (this.radius - this.ringWidth) : this.radiusInner,
+            outerRadius: isAnnotation ? (this.radius - this.ringWidth) : this.radiusOuter
         };
-
     }
 
     /**
@@ -212,30 +199,24 @@ class ActivityClock {
      */
     constructArcs(label) {
 
-        let arcGenerator = arc();
-
-        // divide into 12 even arcs
-        let hours = [...Array(12).keys()];
-
         // determine am or pm ring
         let isAM = label == "am";
 
-        // generate svg paths for arcs
-        return hours.map(i => {
+        // generate svg paths for arcs divided into 12 even slices
+        return [...Array(12).keys()].map(i => {
 
-            // declare properties
+            // declare arc properties
             let a = this.constructAngle(i);
 
             // pull data from source data
             let value = this.dataReference[isAM ? i + 1 : i + 13];
 
-            // generate arc path
-            // generate arc centroid
+            // generate arc path/centroid
             return {
-                centroid: arcGenerator.centroid(a),
+                centroid: arc().centroid(a),
                 id: i,
                 label: `${i + 1} ${label}`,
-                path: arcGenerator(a),
+                path: arc()(a),
                 value: value ? value : 0
             }
 
@@ -353,12 +334,6 @@ class ActivityClock {
 
         // generate svg artboard
         this.artboard = this.generateArtboard(this.container);
-        this.artboard.append("rect")
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("width", this.width)
-            .attr("height", this.height)
-            .attr("fill", "lightgrey");
 
         // wrap for content to ensure nodes render within artboard
         this.content = this.generateContainer(this.artboard);
@@ -369,13 +344,13 @@ class ActivityClock {
         // position/style arcs
         this.configureArcs();
 
-        // generate 12-hour set annotations
+        // am/pm
         this.annotation = this.generateAnnotations(this.artboard);
-        //this.annotationHours = this.generateAnnotationsHours(this.content);
-
-        // position/style annotations
         this.configureAnnotations();
-        //this.configureAnnotationsHours();
+
+        // 12 hours
+        this.annotationHours = this.generateAnnotationsHours(this.content);
+        this.configureAnnotationsHours();
 
         // generate labels
         this.label = this.generateLabels(this.content);
@@ -402,15 +377,14 @@ class ActivityClock {
     /**
      * Update visualization.
      * @param {object} data - key/values where each key is a series label and corresponding value is an array of values
-     * @param {integer} height - height of artboard
-     * @param {integer} width - width of artboard
      */
-    update(data, width, height) {
+    update(data) {
 
         // update self
         this.dataSource = data;
-        this.height = height;
-        this.width = width;
+
+        // condition data
+        this.dataFormatted = this.data;
 
         // generate visualization
         this.generateVisualization();
