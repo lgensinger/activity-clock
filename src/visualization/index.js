@@ -120,7 +120,14 @@ class ActivityClock {
     configureArcs() {
         this.arc
             .attr("data-arc-value", d => d.value)
-            .attr("d", d => d.path)
+            .attr("d", d => d.path);
+    }
+
+    /**
+     * Configure events on arcs in SVG dom element.
+     */
+    configureArcsEvents() {
+        this.arc
             .on("click", (e,d) => {
 
                 // send event to parent
@@ -343,6 +350,9 @@ class ActivityClock {
 
         // position/style arcs
         this.configureArcs();
+
+        // configure events for arcs
+        this.configureArcsEvents();
 
         // am/pm
         this.annotation = this.generateAnnotations(this.artboard);
