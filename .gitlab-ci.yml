@@ -1,0 +1,28 @@
+stages:
+  - test
+  #- version
+  - publish
+
+include:
+  ######################################  TESTING  ######################################
+  - template: Security/SAST.gitlab-ci.yml
+
+  # unit test
+  - project: "lgensinger/cicd-templates"
+    file: "node/module/test.yml"
+
+  # coverage
+  - project: "lgensinger/cicd-templates"
+    file: "node/module/coverage.yml"
+
+  ######################################  VERSIONING  ######################################
+
+  # package
+  #- project: "lgensinger/cicd-templates"
+  #  file: "python/package/version.yml"
+
+  ######################################  PUBLISHING  ######################################
+
+  # npm
+  - project: "lgensinger/cicd-templates"
+    file: "node/module/publish.yml"
