@@ -16,9 +16,19 @@ class ActivityClock {
 
         // update self
         this.annoation = null;
+        this.annotationBackground = null;
+        this.annotationHour = null;
         this.annotationHours = null;
         this.arc = null;
         this.artboard = null;
+        this.classAnnotation = "lgv-annotation";
+        this.classAnnotationBackground = "lgv-annotation-background";
+        this.classAnnotationHour = "lgv-annotation-hour";
+        this.classAnnotationHourGroup = "lgv-annotation-hour-group";
+        this.classArc = "lgv-arc";
+        this.classArcGroup = "lgv-arg-group";
+        this.classContainer = "lgv-container";
+        this.classLabel = "lgv-label";
         this.container = null;
         this.dataSource = data;
         this.degreeSlice = 360 / 12;
@@ -99,18 +109,40 @@ class ActivityClock {
      */
     configureAnnotations() {
         this.annotation
+            .attr("class", this.classAnnotation)
             .attr("x", this.width / 2)
             .attr("y", d => d == "am" ? (this.ringWidth * 2) + (this.artboardUnit * 4) : (this.artboardUnit + 5))
             .text(d => d);
     }
 
     /**
-     * Position and minimally style clock hour annotations in SVG dom element.
+     * Position and minimally style clock hour annotations background in SVG dom element.
+     */
+    configureAnnotationsBackground() {
+        this.annotationBackground
+            .attr("class", this.classAnnotationBackground)
+            .attr("r", this.artboardUnit * 2)
+            .attr("cx", 0)
+            .attr("cy", 0);
+    }
+
+    /**
+     * Position and minimally style clock hour annotation groups in SVG dom element.
      */
     configureAnnotationsHours() {
         this.annotationHours
-            .attr("x", d => d.x)
-            .attr("y", d => d.y + (this.artboardUnit * 0.6))
+            .attr("class", this.classAnnotationHourGroup)
+            .attr("transform", d => `translate(${d.x}, ${d.y})`);
+    }
+
+    /**
+     * Position and minimally style clock hour annotations in SVG dom element.
+     */
+    configureAnnotationsHoursText() {
+        this.annotationHour
+            .attr("class", this.classAnnotationHour)
+            .attr("text-anchor", "middle")
+            .attr("dy", this.artboardUnit * 0.35)
             .text(d => d.label);
     }
 
@@ -119,6 +151,15 @@ class ActivityClock {
      */
     configureArcs() {
         this.arc
+            .attr("class", this.classArcGroup)
+            .selectAll(`.${this.classArc}`)
+            .data(d => [d])
+            .join(
+                enter => enter.append("path"),
+                update => update,
+                exit => exit.remove()
+            )
+            .attr("class", this.classArc)
             .attr("data-arc-value", d => d.value)
             .attr("d", d => d.path);
     }
@@ -145,7 +186,7 @@ class ActivityClock {
             .on("mouseover", (e,d) => {
 
                 // update class
-                select(e.target).attr("class", "lgv-arc active");
+                select(e.target).attr("class", `${this.classArc} active`);
 
                 // send event to parent
                 this.artboard.dispatch("arcmouseover", {
@@ -162,7 +203,7 @@ class ActivityClock {
             .on("mouseout", e => {
 
                 // update class
-                select(e.target).attr("class", "lgv-arc");
+                select(e.target).attr("class", this.classArc);
 
                 // send event to parent
                 this.artboard.dispatch("arcmouseout", {
@@ -173,10 +214,29 @@ class ActivityClock {
     }
 
     /**
+     * Position and minimally style SVG dom element.
+     */
+    configureArtboard() {
+        this.artboard
+            .attr("class", this.name)
+            .attr("viewBox", d => `0 0 ${d.width} ${d.height}`);
+    }
+
+    /**
+     * Position and minimally style containing group in SVG dom element.
+     */
+    configureContainer() {
+        this.content
+            .attr("class", this.classContainer)
+            .attr("transform", `translate(${this.width /2},${(this.height / 2) + (this.padding / 2)})`);
+    }
+
+    /**
      * Position and minimally style labels in SVG dom element.
      */
     configureLabels() {
         this.label
+            .attr("class", this.classLabel)
             .attr("data-arc-value", d => d.value)
             .attr("x", d => d.centroid[0])
             .attr("y", d => d.centroid[1])
@@ -238,31 +298,61 @@ class ActivityClock {
      */
     generateAnnotations(domNode) {
         return domNode
-            .selectAll(".lgv-annotation")
+            .selectAll(`.${this.classAnnotation}`)
             .data(this.ringLabels)
             .join(
                 enter => enter.append("text"),
                 update => update,
                 exit => exit.remove()
-            )
-            .attr("class", "lgv-annotation");
+            );
     }
 
     /**
-     * Generate clock hour text annotation in SVG element.
+     * Generate clock hour text annotation group in SVG element.
      * @param {node} domNode - d3.js SVG selection
      * @returns A d3.js selection.
      */
     generateAnnotationsHours(domNode) {
         return domNode
-            .selectAll(".lgv-annotation-hour")
+            .selectAll(`.${this.classAnnotationHourGroup}`)
             .data(this.hourLabels)
+            .join(
+                enter => enter.append("g"),
+                update => update,
+                exit => exit.remove()
+            );
+    }
+
+    /**
+     * Generate clock hour text annotation background shapes in SVG element.
+     * @param {node} domNode - d3.js SVG selection
+     * @returns A d3.js selection.
+     */
+    generateAnnotationsBackground(domNode) {
+        return domNode
+            .selectAll(`.${this.classAnnotationBackground}`)
+            .data(d => [d])
+            .join(
+                enter => enter.append("circle"),
+                update => update,
+                exit => exit.remove()
+            );
+    }
+
+    /**
+     * Generate clock hour text annotation text in SVG element.
+     * @param {node} domNode - d3.js SVG selection
+     * @returns A d3.js selection.
+     */
+    generateAnnotationsHoursText(domNode) {
+        return domNode
+            .selectAll(`.${this.classAnnotationHour}`)
+            .data(d => [d])
             .join(
                 enter => enter.append("text"),
                 update => update,
                 exit => exit.remove()
-            )
-            .attr("class", "lgv-annotation-hour");
+            );
     }
 
     /**
@@ -272,14 +362,13 @@ class ActivityClock {
      */
     generateArcs(domNode) {
         return domNode
-            .selectAll(".lgv-arc")
+            .selectAll(`.${this.classArcGroup}`)
             .data(this.dataFormatted ? this.dataFormatted : [])
             .join(
-                enter => enter.append("path"),
+                enter => enter.append("g"),
                 update => update,
                 exit => exit.remove()
-            )
-            .attr("class", "lgv-arc");
+            );
     }
 
     /**
@@ -295,9 +384,7 @@ class ActivityClock {
                 enter => enter.append("svg"),
                 update => update,
                 exit => exit.remove()
-            )
-            .attr("viewBox", d => `0 0 ${d.width} ${d.height}`)
-            .attr("class", this.name);
+            );
     }
 
     /**
@@ -307,15 +394,13 @@ class ActivityClock {
      */
     generateContainer(domNode) {
         return domNode
-            .selectAll(".lgv-container")
+            .selectAll(this.classContainer)
             .data(d => [d])
             .join(
                 enter => enter.append("g"),
                 update => update,
                 exit => exit.remove()
-            )
-            .attr("class", "lgv-container")
-            .attr("transform", `translate(${this.width /2},${(this.height / 2) + (this.padding / 2)})`);
+            );
     }
 
     /**
@@ -324,34 +409,32 @@ class ActivityClock {
      */
     generateLabels(domNode) {
         return domNode
-            .selectAll(".lgv-label")
-            .data(this.dataFormatted ? this.dataFormatted : [])
+            .selectAll(`.${this.classLabel}`)
+            .data(d => [d])
             .join(
                 enter => enter.append("text"),
                 update => update,
                 exit => exit.remove()
-            )
-            .attr("class", "lgv-label");
+            );
     }
 
     /**
      * Generate visualization.
+     * @param {styles} object - key/value pairs where each key is a CSS property and corresponding value is its value
      */
-    generateVisualization() {
+    generateVisualization(styles) {
 
         // generate svg artboard
         this.artboard = this.generateArtboard(this.container);
+        this.configureArtboard();
 
         // wrap for content to ensure nodes render within artboard
         this.content = this.generateContainer(this.artboard);
+        this.configureContainer();
 
         // generate arcs in concentric rings
         this.arc = this.generateArcs(this.content);
-
-        // position/style arcs
         this.configureArcs();
-
-        // configure events for arcs
         this.configureArcsEvents();
 
         // am/pm
@@ -361,34 +444,62 @@ class ActivityClock {
         // 12 hours
         this.annotationHours = this.generateAnnotationsHours(this.content);
         this.configureAnnotationsHours();
+        // background
+        this.annotationBackground = this.generateAnnotationsBackground(this.annotationHours);
+        this.configureAnnotationsBackground();
+        // text
+        this.annotationHour = this.generateAnnotationsHoursText(this.annotationHours);
+        this.configureAnnotationsHoursText();
 
         // generate labels
-        this.label = this.generateLabels(this.content);
-
-        // position/style labels
+        this.label = this.generateLabels(this.arc);
         this.configureLabels();
+
+        // style arcs from provided
+        this.styleArcs(styles);
 
     }
 
     /**
      * Render visualization.
      * @param {node} domNode - HTML node
+     * @param {styles} object - key/value pairs where each key is a CSS property and corresponding value is its value
      */
-    render(domNode) {
+    render(domNode, styles) {
 
         // update self
         this.container = select(domNode);
 
         // generate visualization
-        this.generateVisualization();
+        this.generateVisualization(styles);
+
+    }
+
+    /**
+     * Style arcs in SVG dom element.
+     */
+    styleArcs(styles = null) {
+
+        // check if provided
+        if (styles) {
+
+            // add each declared style
+            for (const key in styles) {
+                this.arc
+                    .selectAll(`.${this.classArc}`)
+                    .attr(key, styles[key]);
+            }
+
+        }
 
     }
 
     /**
      * Update visualization.
      * @param {object} data - key/values where each key is a series label and corresponding value is an array of values
+     * @param {styles} object - key/value pairs where each key is a CSS property and corresponding value is its value
      */
-    update(data) {
+    update(data, styles) {
 
         // update self
         this.dataSource = data;
@@ -397,7 +508,7 @@ class ActivityClock {
         this.dataFormatted = this.data;
 
         // generate visualization
-        this.generateVisualization();
+        this.generateVisualization(styles);
 
     }
 
