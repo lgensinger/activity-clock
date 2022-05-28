@@ -74,8 +74,11 @@ Style is expected to be addressed via css. Any style not met by the visualizatio
 | :-- | :-- |
 | `lgv-activity-clock` | top-level svg element |
 | `lgv-annotation` | am/pm ring label |
+| `lgv-annotation-background` | arc hour label background |
 | `lgv-annotation-hour` | arc hour label |
+| `lgv-annotation-hour-group` | arc hour group |
 | `lgv-arc` | ring arc element |
+| `lgv-arg-group` | ring arc group (label + shape) |
 | `lgv-container` | content margined from artboard |
 | `lgv-label` | arc value label element |
 
