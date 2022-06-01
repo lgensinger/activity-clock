@@ -245,6 +245,12 @@ class ActivityClock {
     }
 
     /**
+     * Method to allow bulk overwrites of arbitrary items.
+     */
+    configureOverwrites() {
+    }
+
+    /**
      * Construct d3 arc.
      * @param {integer} i - angle index in circle which in this case represent an hour in a clock
      * @param {boolean} isAnnotation - TRUE if angles are for clock hour annotations
@@ -457,6 +463,9 @@ class ActivityClock {
 
         // style arcs from provided
         this.styleArcs(styles);
+
+        // allow overwrites to facilitate outside of complete method overwriting
+        this.configureOverwrites();
 
     }
 
