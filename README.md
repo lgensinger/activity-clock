@@ -16,15 +16,15 @@ The following values are the expected input data structure.
 ```json
 [
     {
-        "timestamp": "2021-07-31T16:05:55-04:0",
+        "timestamp": "2021-07-31T16:05:55-04",
         "value": 1
     },
     {
-        "timestamp": "2021-07-31T18:05:55-04:0",
+        "timestamp": "2021-07-31T18:05:55-04",
         "value": 3
     },
     {
-        "timestamp": "2021-07-31T16:10:55-04:0",
+        "timestamp": "2021-07-31T16:10:55-04",
         "value": 2
     }
 ]
@@ -38,15 +38,15 @@ import { ActivityClock } from "@lgv/activity-clock";
 // have some data
 let data = [
     {
-        "timestamp": "2021-07-31T16:05:55-04:0",
+        "timestamp": "2021-07-31T16:05:55-04",
         "value": 1
     },
     {
-        "timestamp": "2021-07-31T18:05:55-04:0",
+        "timestamp": "2021-07-31T18:05:55-04",
         "value": 3
     },
     {
-        "timestamp": "2021-07-31T16:10:55-04:0",
+        "timestamp": "2021-07-31T16:10:55-04",
         "value": 2
     }
 ]
@@ -78,7 +78,7 @@ Style is expected to be addressed via css. Any style not met by the visualizatio
 | `lgv-annotation-hour` | arc hour label |
 | `lgv-annotation-hour-group` | arc hour group |
 | `lgv-arc` | ring arc element |
-| `lgv-arg-group` | ring arc group (label + shape) |
+| `lgv-arc-group` | ring arc group (label + shape) |
 | `lgv-container` | content margined from artboard |
 | `lgv-label` | arc value label element |
 
