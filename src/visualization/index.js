@@ -48,26 +48,7 @@ class ActivityClock {
 
         // update self
         this.padding = this.artboardUnit * 2;
-        this.radius = this.artboardUnit * numberOfUnits;
-        this.radiusInner = this.radius * 0.5;
-        this.radiusOuter = this.radius;
-        this.ringWidth = this.ringScale.bandwidth();
-        this.height = (this.radius * 2) + this.padding;
-        this.width = this.radius * 2;
-        this.hourLabels = [...Array(this.clockHours).keys()].map(i => {
-
-            // generate arc and centroid
-            let centroid = arc().centroid(this.constructAngle(i, this.radiusInner, this.radiusOuter, true));
-
-            // generate arc centroid
-            return {
-                label: i + 1,
-                x: centroid[0],
-                y: centroid[1]
-            }
-
-        });
-
+        
     }
 
     /**
@@ -98,6 +79,42 @@ class ActivityClock {
 
     }
 
+    get height() {
+        return (this.radius * 2) + this.padding;
+    }
+
+    get hourLabels() {
+        return [...Array(this.clockHours).keys()].map(i => {
+
+            // generate arc and centroid
+            let centroid = arc().centroid(this.constructAngle(i, this.radiusInner, this.radiusOuter, true));
+
+            // generate arc centroid
+            return {
+                label: i + 1,
+                x: centroid[0],
+                y: centroid[1]
+            }
+
+        });
+    }
+
+    get radius() {
+        return this.artboardUnit * numberOfUnits;
+    }
+
+    get radiusInner() {
+        return this.radius * 0.5;
+    }
+
+    get radiusOuter() {
+        return this.radius;
+    }
+
+    get ringWidth() {
+        return this.ringScale.bandwidth();
+    }
+
     /**
      * Organize time unit and value in flat key/value map.
      * @returns An object where each key is a time unit and corresponding value is the aggregate value for that time unit across the dataset.
@@ -119,7 +136,11 @@ class ActivityClock {
      get ringScale() {
          return scaleBand()
             .domain(this.ringLabels)
-            .rangeRound([this.radiusOuter, this.radiusInner]);
+            .rangeRound([this.radiusInner, this.radiusOuter]);
+     }
+
+     get width() {
+         return this.radius * 2;
      }
 
     /**
@@ -129,7 +150,7 @@ class ActivityClock {
         this.annotation
             .attr("class", this.classAnnotation)
             .attr("x", this.width / 2)
-            .attr("y", d => d == "am" ? (this.ringWidth * 2) + (this.artboardUnit * 4) : (this.artboardUnit + 5))
+            .attr("y", (d,i) => (this.height / 2) - this.ringScale(d))
             .text(d => d);
     }
 
@@ -290,7 +311,7 @@ class ActivityClock {
      * @param {string} label - label for ring
      * @returns An array of objects where each represents an hour in the hour set.
      */
-    constructArcs(label) {
+    constructArcs(ringKey, arcKey) {
 
         // determine am or pm ring
         let isAM = label == "am";
