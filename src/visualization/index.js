@@ -10,10 +10,11 @@ import { degreesToRadians } from "../utilities.js";
 /**
  * ActivityClock is a time series visualization.
  * @param {array} data - objects where each represents a path in the hierarchy
+ * @param {integerr} hours - number of arcs in clock 
  * @param {integer} radius - clock outer radius
  */
 class ActivityClock {
-    constructor(data, radius=configurationLayout.radius) {
+    constructor(data, radius=configurationLayout.radius, hours=configurationLayout.hours) {
 
         // update self
         this.annoation = null;
@@ -30,9 +31,10 @@ class ActivityClock {
         this.classArcGroup = "lgv-arc-group";
         this.classContainer = "lgv-container";
         this.classLabel = "lgv-label";
+        this.clockHours = hours;
         this.container = null;
         this.dataSource = data;
-        this.degreeSlice = 360 / 12;
+        this.degreeSlice = 360 / this.clockHours;
         this.degreeRotation = 15; // rotate 15 degrees so arcs align to analog clock dial visually
         this.label = null;
         this.name = configuration.name;
@@ -52,7 +54,7 @@ class ActivityClock {
         this.ringWidth = this.ringScale.bandwidth();
         this.height = (this.radius * 2) + this.padding;
         this.width = this.radius * 2;
-        this.hourLabels = [...Array(12).keys()].map(i => {
+        this.hourLabels = [...Array(this.clockHours).keys()].map(i => {
 
             // generate arc and centroid
             let centroid = arc().centroid(this.constructAngle(i, this.radiusInner, this.radiusOuter, true));
@@ -269,7 +271,7 @@ class ActivityClock {
     /**
      * Construct arc values for layout.
      * @param {string} label - label for ring
-     * @returns An array of objects where each represents an hour in the 12-hour set.
+     * @returns An array of objects where each represents an hour in the hour set.
      */
     constructArcs(label) {
 
@@ -277,8 +279,8 @@ class ActivityClock {
         let isAM = label == "am";
         let ringIndex = this.ringLabels.indexOf(label);
 
-        // generate svg paths for arcs divided into 12 even slices
-        return [...Array(12).keys()].map(i => {
+        // generate svg paths for arcs divided into even slices
+        return [...Array(this.clockHours).keys()].map(i => {
 
             // determine upper bounds of arc radius
             let outerRadius = this.ringScale(label);
@@ -304,7 +306,7 @@ class ActivityClock {
     }
 
     /**
-     * Generate 12-hour text annotation in SVG element.
+     * Generate hour text annotation in SVG element.
      * @param {node} domNode - d3.js SVG selection
      * @returns A d3.js selection.
      */
@@ -459,7 +461,7 @@ class ActivityClock {
         this.annotation = this.generateAnnotations(this.artboard);
         this.configureAnnotations();
 
-        // 12 hours
+        // hours
         this.annotationHours = this.generateAnnotationsHours(this.content);
         this.configureAnnotationsHours();
         // background

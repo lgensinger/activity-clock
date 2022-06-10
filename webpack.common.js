@@ -15,6 +15,7 @@ const commonConfig = {
     plugins: [
         new webpack.DefinePlugin({
             "process.env": {
+                "LAYOUT_CLOCK_HOURS": JSON.stringify(process.LAYOUT_CLOCK_HOURS),
                 "LAYOUT_RADIUS": JSON.stringify(process.LAYOUT_RADIUS)
             }
         })
