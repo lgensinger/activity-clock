@@ -71,21 +71,24 @@ class ActivityClock {
     }
 
     /**
+     * Calculate totals for time units
+     * @returns An array of objects where each represents a time unit in entire clock.
+     */
+    get aggregate() {
+        return rollup(this.dataSource ? this.dataSource : [],
+            v => sum(v, d => d.value),
+            d => moment(d.timestamp).format("H")
+        );
+
+    /**
      * Condition data for visualization requirements.
      * @returns An array of objects where each represents an hour in a 24 hour day.
      */
     get data() {
 
-        // calculate totals for all hours in source
-        let aggregateHours = rollup(this.dataSource ? this.dataSource : [],
-            v => sum(v, d => d.value),
-            d => moment(d.timestamp).format("H")
-        );
-
         // organize as simple key/value object
         // hour: value
-        this.dataReference = {};
-        for (const hour of Array.from(aggregateHours)) { this.dataReference[hour[0]] = hour[1]; }
+        this.dataReference = this.reference;
 
         // generate rings for ring sets and flatten into 1D array of arc objects
         // generate arcs and map data to each
@@ -93,6 +96,20 @@ class ActivityClock {
             .map((d, i) => this.constructArcs(d, this.ringScale(d), this.ringWidth * (i + 1)))
             .flat();
 
+    }
+
+    /**
+     * Organize time unit and value in flat key/value map.
+     * @returns An object where each key is a time unit and corresponding value is the aggregate value for that time unit across the dataset.
+     */
+    get reference() {
+
+        // establish map
+        let obj = {};
+
+        for (const hour of Array.from(this.aggregate)) { obj[hour[0]] = hour[1]; };
+
+        return obj;
     }
 
     /**
