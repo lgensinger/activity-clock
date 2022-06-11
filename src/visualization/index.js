@@ -67,10 +67,6 @@ class ActivityClock {
      */
     get data() {
 
-        // organize as simple key/value object
-        // hour: value
-        this.dataReference = this.reference;
-console.log(this.dataReference)
         // generate rings for ring sets and flatten into 1D array of arc objects
         // generate arcs and map data to each
         return this.ringLabels
@@ -84,7 +80,7 @@ console.log(this.dataReference)
     }
 
     get height() {
-        return (this.radius * 2);
+        return (this.radius * 2) + this.padding;
     }
 
     get hourLabels() {
@@ -162,7 +158,8 @@ console.log(this.dataReference)
         this.annotation
             .attr("class", this.classAnnotation)
             .attr("x", 0)
-            .attr("y", d => this.ringScale(d) * -1)
+            .attr("y", d => d == "am" ? (this.ringScale(d) * -1) + this.artboardUnit : (this.ringScale(d) * -1) - (this.artboardUnit * 3.5))
+            .attr("text-anchor", "middle")
             .text(d => d);
     }
 
@@ -279,7 +276,7 @@ console.log(this.dataReference)
     configureContainer() {
         this.content
             .attr("class", this.classContainer)
-            .attr("transform", `translate(${this.width / 2},${(this.height / 2)})`);
+            .attr("transform", `translate(${this.width /2},${(this.height / 2) + (this.padding / 2)})`);
     }
 
     /**
@@ -340,7 +337,7 @@ console.log(this.dataReference)
             let a = this.constructAngle(i, outerRadius + this.ringWidth, outerRadius);
 
             // pull data from source data
-            let value = this.dataReference[`${ringKey}-${i}`];
+            let value = this.reference[`${ringKey}-${i}`];
 
             // generate arc path/centroid
             return {
