@@ -64,6 +64,7 @@ The following values can be set via environment or passed into the class.
 
 | Name | Type | Description |
 | :-- | :-- | :-- |
+| `LAYOUT_CLOCK_HOURS` | integer | number of arcs in clock |
 | `LAYOUT_RADIUS` | integer | outer radius of clock |
 
 ## Style
