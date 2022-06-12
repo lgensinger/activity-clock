@@ -1,6 +1,6 @@
 import { rollup, sum } from "d3-array";
 import { scaleBand } from "d3-scale";
-import { select } from "d3-selection";
+import { select, selectAll } from "d3-selection";
 import { arc } from "d3-shape";
 import moment from "moment";
 
@@ -66,13 +66,9 @@ class ActivityClock {
      * @returns An array of objects where each represents an hour in a 24 hour day.
      */
     get data() {
-
-        // generate rings for ring sets and flatten into 1D array of arc objects
-        // generate arcs and map data to each
         return this.ringLabels
             .map((d,i) => this.constructArcs(d))
             .flat();
-
     }
 
     get degreeSlice() {
@@ -171,7 +167,8 @@ class ActivityClock {
             .attr("class", this.classAnnotationBackground)
             .attr("r", this.artboardUnit * 2)
             .attr("cx", 0)
-            .attr("cy", 0);
+            .attr("cy", 0)
+            .attr("pointer-events", "none");
     }
 
     /**
@@ -180,7 +177,40 @@ class ActivityClock {
     configureAnnotationsHours() {
         this.annotationHours
             .attr("class", this.classAnnotationHourGroup)
-            .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            .attr("transform", d => `translate(${d.x}, ${d.y})`)
+            .on("mouseover", (e,d) => {
+
+                // update adjacent arc classes
+                this.artboard
+                    .selectAll(`.${this.classArc}`)
+                    .filter(x => (x.arcKey + this.timeOffset) == d.label)
+                    .attr("class", `${this.classArc} active`);
+
+                // send event to parent
+                this.artboard.dispatch("arc2mouseover", {
+                    bubbles: true,
+                    detail: {
+                        id: d.label,
+                        label: d.label,
+                        value: d.label,
+                        xy: [e.clientX + (this.artboardUnit / 2), e.clientY + (this.artboardUnit / 2)]
+                    }
+                });
+
+            })
+            .on("mouseout", (e,d) => {
+
+                // update adjacent arc classes
+                this.artboard
+                    .selectAll(`.${this.classArc}`)
+                    .attr("class", this.classArc);
+
+                // send event to parent
+                this.artboard.dispatch("arc2mouseout", {
+                    bubbles: true
+                });
+
+            });
     }
 
     /**
@@ -208,7 +238,9 @@ class ActivityClock {
                 exit => exit.remove()
             )
             .attr("class", this.classArc)
+            .attr("data-arc-key", d => d.arcKey)
             .attr("data-arc-value", d => d.value)
+            .attr("data-ring-key", d => d.ringKey)
             .attr("d", d => d.path);
     }
 
@@ -223,8 +255,10 @@ class ActivityClock {
                 this.artboard.dispatch("arcclick", {
                     bubbles: true,
                     detail: {
+                        arcKey: d.arcKey,
                         id: d.id,
                         label: d.label,
+                        ringKey: d.ringKey,
                         value: d.value,
                         xy: [e.clientX + (this.artboardUnit / 2), e.clientY + (this.artboardUnit / 2)]
                     }
@@ -233,15 +267,29 @@ class ActivityClock {
             })
             .on("mouseover", (e,d) => {
 
-                // update class
+                // update adjacent ring classes
+                this.artboard
+                    .selectAll(`.${this.classArc}`)
+                    .filter(d => d.ringKey == e.target.getAttribute("data-ring-key"))
+                    .attr("class", `${this.classArc} adjacent`);
+
+                // update adjacent arc classes
+                this.artboard
+                    .selectAll(`.${this.classArc}`)
+                    .filter(d => d.arcKey == e.target.getAttribute("data-arc-key"))
+                    .attr("class", `${this.classArc} adjacent`);
+
+                // update arc class
                 select(e.target).attr("class", `${this.classArc} active`);
 
                 // send event to parent
                 this.artboard.dispatch("arcmouseover", {
                     bubbles: true,
                     detail: {
+                        arcKey: d.arcKey,
                         id: d.id,
                         label: d.label,
+                        ringKey: d.ringKey,
                         value: d.value,
                         xy: [e.clientX + (this.artboardUnit / 2), e.clientY + (this.artboardUnit / 2)]
                     }
@@ -250,8 +298,10 @@ class ActivityClock {
             })
             .on("mouseout", e => {
 
-                // update class
-                select(e.target).attr("class", this.classArc);
+                // update adjacent arc classes
+                this.artboard
+                    .selectAll(`.${this.classArc}`)
+                    .attr("class", this.classArc);
 
                 // send event to parent
                 this.artboard.dispatch("arcmouseout", {
@@ -289,6 +339,7 @@ class ActivityClock {
             .attr("x", d => d.centroid[0])
             .attr("y", d => d.centroid[1])
             .attr("dy", "0.35em")
+            .attr("pointer-events", "none")
             .attr("text-anchor", "middle")
             .text(d => d.value);
     }
@@ -297,6 +348,46 @@ class ActivityClock {
      * Method to allow bulk overwrites of arbitrary items.
      */
     configureOverwrites() {
+    }
+
+    /**
+     * Configure events on arcs in SVG dom element.
+     */
+    configureRingEvents() {
+        this.annotation
+            .on("mouseover", (e,d) => {
+
+                // update adjacent ring classes
+                this.artboard
+                    .selectAll(`.${this.classArc}`)
+                    .filter(x => x.ringKey == d)
+                    .attr("class", `${this.classArc} active`);
+
+                // send event to parent
+                this.artboard.dispatch("ringmouseover", {
+                    bubbles: true,
+                    detail: {
+                        id: d,
+                        label: d,
+                        value: d,
+                        xy: [e.clientX + (this.artboardUnit / 2), e.clientY + (this.artboardUnit / 2)]
+                    }
+                });
+
+            })
+            .on("mouseout", e => {
+
+                // update adjacent arc classes
+                this.artboard
+                    .selectAll(`.${this.classArc}`)
+                    .attr("class", this.classArc);
+
+                // send event to parent
+                this.artboard.dispatch("ringmouseout", {
+                    bubbles: true
+                });
+
+            });
     }
 
     /**
@@ -341,10 +432,12 @@ class ActivityClock {
 
             // generate arc path/centroid
             return {
+                arcKey: i,
                 centroid: arc().centroid(a),
                 id: i,
-                label: `${ringKey}-${i}`,
+                label: `${i + this.timeOffset} ${ringKey}`,
                 path: arc()(a),
+                ringKey: ringKey,
                 value: value ? value : 0
             }
 
@@ -494,7 +587,7 @@ class ActivityClock {
         // generate svg artboard
         this.artboard = this.generateArtboard(this.container);
         this.configureArtboard();
-this.artboard.append("rect").attr("x", 0).attr("y", 0).attr("width", this.width).attr("height", this.height).attr("fill", "lightgrey")
+
         // wrap for content to ensure nodes render within artboard
         this.content = this.generateContainer(this.artboard);
         this.configureContainer();
@@ -507,6 +600,7 @@ this.artboard.append("rect").attr("x", 0).attr("y", 0).attr("width", this.width)
         // am/pm
         this.annotation = this.generateAnnotations(this.content);
         this.configureAnnotations();
+        this.configureRingEvents();
 
         // hours
         this.annotationHours = this.generateAnnotationsHours(this.content);
