@@ -177,7 +177,40 @@ class ActivityClock {
     configureAnnotationsHours() {
         this.annotationHours
             .attr("class", this.classAnnotationHourGroup)
-            .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            .attr("transform", d => `translate(${d.x}, ${d.y})`)
+            .on("mouseover", (e,d) => {
+
+                // update adjacent arc classes
+                this.artboard
+                    .selectAll(`.${this.classArc}`)
+                    .filter(x => (x.arcKey + this.timeOffset) == d.label)
+                    .attr("class", `${this.classArc} active`);
+
+                // send event to parent
+                this.artboard.dispatch("arc2mouseover", {
+                    bubbles: true,
+                    detail: {
+                        id: d.label,
+                        label: d.label,
+                        value: d.label,
+                        xy: [e.clientX + (this.artboardUnit / 2), e.clientY + (this.artboardUnit / 2)]
+                    }
+                });
+
+            })
+            .on("mouseout", (e,d) => {
+
+                // update adjacent arc classes
+                this.artboard
+                    .selectAll(`.${this.classArc}`)
+                    .attr("class", this.classArc);
+
+                // send event to parent
+                this.artboard.dispatch("arc2mouseout", {
+                    bubbles: true
+                });
+
+            });
     }
 
     /**
@@ -188,7 +221,6 @@ class ActivityClock {
             .attr("class", this.classAnnotationHour)
             .attr("text-anchor", "middle")
             .attr("dy", this.artboardUnit * 0.35)
-            .attr("pointer-events", "none")
             .text(d => d.label);
     }
 
@@ -266,19 +298,9 @@ class ActivityClock {
             })
             .on("mouseout", e => {
 
-                // update arc class
-                select(e.target).attr("class", this.classArc);
-
-                // update ring classes
-                this.artboard
-                    .selectAll(`.${this.classArc}`)
-                    .filter(d => d.ringKey == e.target.getAttribute("data-ring-key"))
-                    .attr("class", this.classArc);
-
                 // update adjacent arc classes
                 this.artboard
                     .selectAll(`.${this.classArc}`)
-                    .filter(d => d.arcKey == e.target.getAttribute("data-arc-key"))
                     .attr("class", this.classArc);
 
                 // send event to parent
@@ -326,6 +348,46 @@ class ActivityClock {
      * Method to allow bulk overwrites of arbitrary items.
      */
     configureOverwrites() {
+    }
+
+    /**
+     * Configure events on arcs in SVG dom element.
+     */
+    configureRingEvents() {
+        this.annotation
+            .on("mouseover", (e,d) => {
+
+                // update adjacent ring classes
+                this.artboard
+                    .selectAll(`.${this.classArc}`)
+                    .filter(x => x.ringKey == d)
+                    .attr("class", `${this.classArc} active`);
+
+                // send event to parent
+                this.artboard.dispatch("ringmouseover", {
+                    bubbles: true,
+                    detail: {
+                        id: d,
+                        label: d,
+                        value: d,
+                        xy: [e.clientX + (this.artboardUnit / 2), e.clientY + (this.artboardUnit / 2)]
+                    }
+                });
+
+            })
+            .on("mouseout", e => {
+
+                // update adjacent arc classes
+                this.artboard
+                    .selectAll(`.${this.classArc}`)
+                    .attr("class", this.classArc);
+
+                // send event to parent
+                this.artboard.dispatch("ringmouseout", {
+                    bubbles: true
+                });
+
+            });
     }
 
     /**
@@ -538,6 +600,7 @@ class ActivityClock {
         // am/pm
         this.annotation = this.generateAnnotations(this.content);
         this.configureAnnotations();
+        this.configureRingEvents();
 
         // hours
         this.annotationHours = this.generateAnnotationsHours(this.content);
