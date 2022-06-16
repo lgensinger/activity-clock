@@ -583,7 +583,7 @@ class ActivityClock {
         // pull actual data from provided source
         // bind to time arc in the clock
         this.dataFormatted = this.data;
-
+console.log(this.reference)
         // generate svg artboard
         this.artboard = this.generateArtboard(this.container);
         this.configureArtboard();
