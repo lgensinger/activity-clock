@@ -548,7 +548,7 @@ class ActivityClock {
      */
     generateContainer(domNode) {
         return domNode
-            .selectAll(this.classContainer)
+            .selectAll(`.${this.classContainer}`)
             .data(d => [d])
             .join(
                 enter => enter.append("g"),
