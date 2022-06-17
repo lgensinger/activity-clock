@@ -5,8 +5,8 @@ const configuration = {
 };
 
 const configurationLayout = {
-    hours: process.env.LAYOUT_CLOCK_HOURS || 12,
-    radius: process.env.LAYOUT_RADIUS || 600
+    hours: process.env.LGV_CLOCK_HOURS || 12,
+    radius: process.env.LGV_RADIUS || 600
 }
 
 export { configuration, configurationLayout };
