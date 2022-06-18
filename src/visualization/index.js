@@ -180,19 +180,24 @@ class ActivityClock {
             .attr("transform", d => `translate(${d.x}, ${d.y})`)
             .on("mouseover", (e,d) => {
 
-                // update adjacent arc classes
-                this.artboard
+                // filter elements matching arc key
+                let arcs = this.artboard
                     .selectAll(`.${this.classArc}`)
-                    .filter(x => (x.arcKey + this.timeOffset) == d.label)
-                    .attr("class", `${this.classArc} active`);
+                    .filter(x => (x.arcKey + this.timeOffset) == d.label);
+
+                // calculate total across filtered elements
+                let total = sum(arcs.nodes(), d => d.dataset.arcValue);
+
+                // update adjacent arc classes
+                arcs.attr("class", `${this.classArc} active`);
 
                 // send event to parent
-                this.artboard.dispatch("arc2mouseover", {
+                this.artboard.dispatch("timemouseover", {
                     bubbles: true,
                     detail: {
                         id: d.label,
                         label: d.label,
-                        value: d.label,
+                        value: total,
                         xy: [e.clientX + (this.artboardUnit / 2), e.clientY + (this.artboardUnit / 2)]
                     }
                 });
@@ -206,7 +211,7 @@ class ActivityClock {
                     .attr("class", this.classArc);
 
                 // send event to parent
-                this.artboard.dispatch("arc2mouseout", {
+                this.artboard.dispatch("timemouseout", {
                     bubbles: true
                 });
 
@@ -357,11 +362,16 @@ class ActivityClock {
         this.annotation
             .on("mouseover", (e,d) => {
 
-                // update adjacent ring classes
-                this.artboard
+                // filter for related elements
+                let arcs = this.artboard
                     .selectAll(`.${this.classArc}`)
-                    .filter(x => x.ringKey == d)
-                    .attr("class", `${this.classArc} active`);
+                    .filter(x => x.ringKey == d);
+
+                // calculate total across filtered elements
+                let total = sum(arcs.nodes(), d => d.dataset.arcValue);
+
+                // update adjacent ring classes
+                arcs.attr("class", `${this.classArc} active`);
 
                 // send event to parent
                 this.artboard.dispatch("ringmouseover", {
@@ -369,7 +379,7 @@ class ActivityClock {
                     detail: {
                         id: d,
                         label: d,
-                        value: d,
+                        value: total,
                         xy: [e.clientX + (this.artboardUnit / 2), e.clientY + (this.artboardUnit / 2)]
                     }
                 });
@@ -583,7 +593,7 @@ class ActivityClock {
         // pull actual data from provided source
         // bind to time arc in the clock
         this.dataFormatted = this.data;
-console.log(this.reference)
+
         // generate svg artboard
         this.artboard = this.generateArtboard(this.container);
         this.configureArtboard();
